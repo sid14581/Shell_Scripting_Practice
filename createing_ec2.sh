@@ -1,84 +1,92 @@
+
 #!/bin/bash
+set -euo pipefail
 
-set -u 
-set -e
-set -o pipefail
-
-checking_aws_exist() {
-  if ! command -v aws &> /dev/null ; then 
-	  echo "Install the AWS." >&2
-	  return 1
-  fi
+check_awscli() {
+    if ! command -v aws &> /dev/null; then
+        echo "AWS CLI is not installed. Please install it first." >&2
+        exit 1
+    fi
 }
 
-installing_aws() {
-  echo " "
-  echo "Instaling the AWS CLI"
+install_awscli() {
+    echo "Installing AWS CLI v2 on Linux..."
 
-  cd /home/ubuntu/
+    # Download and install AWS CLI v2
+    curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    sudo apt-get install -y unzip &> /dev/null
+    unzip -q awscliv2.zip
+    sudo ./aws/install
 
-  curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
- 
-  sudo apt-get install -y unzip &> /dev/null
- 
-  unzip -q awscliv2.zip 
+    # Verify installation
+    aws --version
 
-  sudo ./aws/install 
-  echo " "
-
-  aws --version
-  echo " "
-
-  rm -drf awscliv2.zip ./aws
-  echo " "
-  echo "AWSCLI is installed"
-
-  cd /home/ubuntu/Shell_Scripting_practice/
+    # Clean up
+    rm -rf awscliv2.zip ./aws
 }
 
+wait_for_instance() {
+    local instance_id="$1"
+    echo "Waiting for instance $instance_id to be in running state..."
 
-creating_ec2_instance() {
-  local instance_name=$1
-  local ami_id=$2
-  local instance_type=$3
-  local key_name=$4
-  local subnet_id=$5
-  local security_grp=$6
-
-  instance_id=$(
-    aws ec2 run-instances --image-id "$ami_id" --instance-type "$instance_type" --key-name "$key_name" --subnet-id "$subnet_id" --security-group-ids "$security_grp"     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$instance_name}]" --query 'Instances[0].InstanceId' --output text  )
-
- if [[ -z "$instance_id" ]]; then
-    echo "Failed to create Ec2 instance"
-    exit 1
- fi
-
- echo "Instance $instance_id created successfully."
-
- wait_instance "$instance_id"
-
+    while true; do
+        state=$(aws ec2 describe-instances --instance-ids "$instance_id" --query 'Reservations[0].Instances[0].State.Name' --output text)
+        if [[ "$state" == "running" ]]; then
+            echo "Instance $instance_id is now running."
+            break
+        fi
+        sleep 10
+    done
 }
 
+create_ec2_instance() {
+    local ami_id="$1"
+    local instance_type="$2"
+    local key_name="$3"
+    local subnet_id="$4"
+    local security_group_ids="$5"
+    local instance_name="$6"
 
-waiting_instance() {
-  
+    # Run AWS CLI command to create EC2 instance
+    instance_id=$(aws ec2 run-instances \
+        --image-id "$ami_id" \
+        --instance-type "$instance_type" \
+        --key-name "$key_name" \
+        --subnet-id "$subnet_id" \
+        --security-group-ids "$security_group_ids" \
+        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$instance_name}]" \
+        --query 'Instances[0].InstanceId' \
+        --output text
+    )
+
+    if [[ -z "$instance_id" ]]; then
+        echo "Failed to create EC2 instance." >&2
+        exit 1
+    fi
+
+    echo "Instance $instance_id created successfully."
+
+    # Wait for the instance to be in running state
+    wait_for_instance "$instance_id"
 }
 
+main() {
+    check_awscli || install_awscli
 
+    echo "Creating EC2 instance..."
 
-#checking_aws_exist || installing_aws
+    # Specify the parameters for creating the EC2 instance
+    AMI_ID=""
+    INSTANCE_TYPE="t2.micro"
+    KEY_NAME=""
+    SUBNET_ID=""
+    SECURITY_GROUP_IDS=""  # Add your security group IDs separated by space
+    INSTANCE_NAME="Shell-Script-EC2-Demo"
 
-if ! checking_aws_exist; then 
-       	installing_aws
-fi
+    # Call the function to create the EC2 instance
+    create_ec2_instance "$AMI_ID" "$INSTANCE_TYPE" "$KEY_NAME" "$SUBNET_ID" "$SECURITY_GROUP_IDS" "$INSTANCE_NAME"
 
-Instance_Name="Ec2_via_Shell_Script"
-AMI_ID=""
-Instance_Type="t2.micro"
-Key_Name=""
-Subnet_Id=""
-Security_Grp=""
+    echo "EC2 instance creation completed."
+}
 
-creating_ec2_instance 
-
-
+main "$@"
