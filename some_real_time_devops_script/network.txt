@@ -1,0 +1,12 @@
+www.google.com is reachable
+www.google.com is reachable
+www.google.com is reachable
+www.goog.com is not reachable
+https://www.instagram.com is not reachable
+www.instagram.com is reachable
+www.facebook.com is reachable
+https://www.facebook.com is not reachable
+www.facebook.com is not reachable
+www.facebook.com is reachable
+www.google.com is reachable
+www.googlm is not reachable
