@@ -36,25 +36,26 @@ creating_instance(){
     exit 1
   fi
 	
-  waiting_instance $instance_id
+ waiting_instance $instance_id 
 
-  echo "Ec2 instance  $id has created successfully"
-	
+ echo " "
+ echo "Ec2 instance $id has created successfully"
+  	
 }
 
-#========================================================================================================================
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 waiting_instance() {
  local id=$1
- 
- instance_state=$(aws ec2 describe-instances --instance-ids "$id" --region="us-east-1" --query 'Reservations[*].Instances[*].State.Name' --output text)
- 
+ echo " "
  echo "Waiting for the instance $id to be in running state"
 
- while True
+ while true
  do
+	 instance_state=$(aws ec2 describe-instances --instance-ids "$id" --region="us-east-1" --query 'Reservations[*].Instances[*].State.Name' --output text)
+
 	 if [[ $instance_state = "running" ]]; then 
-		echo "Ec2 instance  $id is in running state"
+		echo "Ec2 instance $id is in running state"
 		break
 	 fi
 
@@ -69,6 +70,16 @@ done
 
 instance_info() {
   echo "Instance Information....."
+  
+  instance_state=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].State.Name' \
+          --output text )
+
+  instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
+
+  instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
+
+
+
 }
 
 #=========================================================================================================================
@@ -76,8 +87,23 @@ instance_info() {
 # Deleting the instance
 
 deleting_instance(){
-  echo  "deleting the ec2 instance"
+
+  echo  "Deleting the ec2 instance"
+
+  local region=$1
+
+  instance_state=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].State.Name' \
+	  --output text ) 
+   
+  instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
+
+  echo "$instance_state   $instance_id"
+
+  aws ec2 terminate-instances --region "$region" --instance-ids $instance_id
+
 }
+
+#===========================================================================================================================
 
 # checking aws is installed or not
 
@@ -119,13 +145,25 @@ if ! checking_aws_installed; then
       install_awscli
 fi
 
-
 ami_id="ami-04a81a99f5ec58529"
 instance_name="YoYo"
 instance_type="t2.micro"
 key_pair="yoyo east-1"
-security_grp="sg-06d119a7d6b45a6d9"
+security_grp="sg-0a718c8e406f30f5e"
 region="us-east-1"
 
+argument=$1
 
-creating_instance "$ami_id" "$instance_name" "$instance_type" "$key_pair" "$security_grp" "$region"
+if [[ $argument = "create" ]]; then
+    creating_instance "$ami_id" "$instance_name" "$instance_type" "$key_pair" "$security_grp" "$region"
+fi
+
+if [[ $argument = "delete" ]]; then 
+	deleting_instance "$region"
+fi
+
+if [[ $argument = "show" ]]; then                                                                                                                                 156,1         94%
+        instance_info                                                                                                                                  157,36        
+fi
+
+
