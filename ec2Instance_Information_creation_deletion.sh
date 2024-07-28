@@ -69,17 +69,32 @@ done
 # Showing the instance Information
 
 instance_info() {
+  echo " "
   echo "Instance Information....."
+
+  local region=$1
+  echo " "
   
-  instance_state=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].State.Name' \
-          --output text )
+  instance_state=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running" \
+	  --query 'Reservations[*].Instances[*].State.Name' --output text )
 
   instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
 
-  instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
+  instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running" --query 'Reservations[*].Instances[*].InstanceId' --output text )
 
+ instance_Type=$( aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceType' --output text)
+  
+ instance_SGP=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].SecurityGroups[*].GroupName' --output text)
 
+ instance_IPA=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].NetworkInterfaces[*].Association.PublicIp' --output text)
 
+ echo "Instance State -->           $instance_state"
+ echo "Instance ID -->              $instance_id"
+ echo "Instance Type -->            $instance_Type"
+ echo "Instance Security Group -->  $instance_SGP"
+ echo "Instacne IP Address -->      $instance_IPA"
+
+ echo " " 
 }
 
 #=========================================================================================================================
@@ -162,8 +177,8 @@ if [[ $argument = "delete" ]]; then
 	deleting_instance "$region"
 fi
 
-if [[ $argument = "show" ]]; then                                                                                                                                 156,1         94%
-        instance_info                                                                                                                                  157,36        
+if [[ $argument = "show" ]]; then                                                                                                                         
+   instance_info "$region"                                                                                           
 fi
 
 
