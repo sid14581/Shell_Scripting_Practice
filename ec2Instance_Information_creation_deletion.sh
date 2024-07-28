@@ -54,8 +54,8 @@ waiting_instance() {
  do
 	 instance_state=$(aws ec2 describe-instances --instance-ids "$id" --region="us-east-1" --query 'Reservations[*].Instances[*].State.Name' --output text)
 
-	 if [[ $instance_state = "running" ]]; then 
-		echo "Ec2 instance $id is in running state"
+	 if [[ ($instance_state = "running") || ($instance_state = "terminated")  ]]; then 
+		echo "Ec2 instance $id is in $instance_state state"
 		break
 	 fi
 
@@ -70,13 +70,10 @@ done
 
 instance_info() {
   echo " "
-  echo "Instance Information....."
+  echo "Instance Information of the running state...."
 
   local region=$1
   echo " "
-  
-  instance_state=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running" \
-	  --query 'Reservations[*].Instances[*].State.Name' --output text )
 
   instance_id=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].InstanceId' --output text )
 
@@ -88,11 +85,10 @@ instance_info() {
 
  instance_IPA=$(aws ec2 describe-instances --region="$region" --filters "Name=instance-state-name,Values=running"  --query 'Reservations[*].Instances[*].NetworkInterfaces[*].Association.PublicIp' --output text)
 
- echo "Instance State -->           $instance_state"
- echo "Instance ID -->              $instance_id"
- echo "Instance Type -->            $instance_Type"
- echo "Instance Security Group -->  $instance_SGP"
- echo "Instacne IP Address -->      $instance_IPA"
+ echo "Instance ID -->                $instance_id"
+ echo "Instance Type -->              $instance_Type"
+ echo "Instance Security Group -->    $instance_SGP"
+ echo "Instance PublicIP Address -->  $instance_IPA"
 
  echo " " 
 }
@@ -115,6 +111,11 @@ deleting_instance(){
   echo "$instance_state   $instance_id"
 
   aws ec2 terminate-instances --region "$region" --instance-ids $instance_id
+
+  waiting_instance $instance_id
+
+  echo " "
+  echo "Ec2 instance $id has terminated successfully"
 
 }
 
