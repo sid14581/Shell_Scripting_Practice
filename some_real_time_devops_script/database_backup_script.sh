@@ -13,15 +13,44 @@
 ################################################################################################
 
 
-pwdd=$(pwd)
+pwdd="/home/ubuntu/Shell_Scripting_Practice"
 
 db_name="mysql"
 DATE=$(date +%m-%d-%Y-%T)
 backup_dir="/database_backup/"
-dbbackup=$pwdd$backup_dir$DATE
+dbbackup="$pwdd$backup_dir$DATE"
 
-mkdir -p $dbbackup
+sudo mkdir -p $dbbackup
+
+sudo sudo chown -R ubuntu:ubuntu $dbbackup
 
 mysqldump -u root -p $db_name > "$dbbackup/backup-$DATE-db.sql"
 
 echo "$db_name database is backed up in $backup_dir folder"
+echo " "
+
+db_backups=($(ls ./../database_backup/ -t))
+
+for db_backup in "${db_backups[@]}"; do
+    echo "$db_backup"
+done
+
+echo " "
+
+if [[ ${#db_backups[@]} -gt 5 ]]; then
+	for db_backup in "${db_backups[@]:5}"; do
+		echo "DB file $db_backup is removed"
+                sudo rm -drf "./../database_backup/$db_backup"
+	done
+fi
+
+echo "DB file ${db_backups[0]} is added"
+echo " "
+
+db_backups=($(ls ./../database_backup/ -t))
+
+for db_backup in "${db_backups[@]}"; do
+     echo "$db_backup"
+done
+
+echo " "
