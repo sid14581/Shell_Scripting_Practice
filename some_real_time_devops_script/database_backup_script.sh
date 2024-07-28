@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# Author: Siddharth
-
-# Date Created: 07-11-2024
-# Date Modified: 07-11-2024
-
-# Usage: database backup
-# Description: Backuping the database in the backup folderr with backup  date and time
-
+##############################################################################################
+##
+## Author: Siddharth
+##
+## Date Created: 07-11-2024
+## Date Modified: 07-28-2024
+##
+## Usage: database backup
+## Description: Backuping the database in the backup folderr with backup  date and time
+##
 ################################################################################################
 
 
