@@ -13,17 +13,18 @@
 ################################################################################################
 
 
-SRC="/home/ubuntu/Shell_Scripting_Practice/some_real_time_devops_script/"
-DES="/home/ubuntu/Shell_Scripting_Practice/backup_script_destination/"
+SRC="/home/ubuntu/Shell_Scripting_Practice/some_real_time_devops_script/" # add your source path
+DES="$(pwd)/../backup_script_destination"
 
 DATE=$(date +%Y-%m-%d-%T)
 
 backup="$DES/$DATE"
 
-cp -r $SRC $backup
+sudo mkdir -p "$DES"
 
+sudo cp -r $SRC $backup
 
-backups=($(ls ../backup_script_destination/ -t))
+backups=($(ls ./../backup_script_destination/ -t))
 
 echo " "
 echo "List of the backups-->"
@@ -35,7 +36,7 @@ echo " "
 if [[ "${#backups[@]}" -gt 5 ]]; then
   for backup in "${backups[@]:5}"; do 
        echo "backup file $backup is removed "
-       rm -dfr "../backup_script_destination/$backup"
+       sudo rm -dfr "../backup_script_destination/$backup"
   done
 fi
 echo " "
